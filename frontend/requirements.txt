@@ -1,0 +1,4 @@
+streamlit==1.38.0      
+requests==2.32.0          
+langfuse==2.46.0       
+uuid==1.30              

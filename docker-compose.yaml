@@ -1,0 +1,97 @@
+version: '1.0'
+
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.4.3
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "${ELASTIC_PORT:-9200}:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  langfuse-server:
+    image: langfuse/langfuse:latest
+    container_name: langfuse
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_PORT=${DATABASE_PORT:-5432}
+      - DATABASE_USERNAME=${DATABASE_USERNAME:-root}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-root}
+      - DATABASE_NAME=${DATABASE_NAME:-langfuse}
+      - DATABASE_HOST=${DATABASE_HOST:-db}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-secret}
+      - SALT=${SALT:-salt}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - TELEMETRY_ENABLED=${TELEMETRY_ENABLED:-false}
+      - LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES=${LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES:-false}
+
+  db:
+    image: postgres:13
+    container_name: postgres
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend_container
+    depends_on:
+      - elasticsearch
+      - langfuse-server
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
+      - LANGFUSE_SECRET_KEY=sk-lf-566804f8-f5cb-48d7-a4b0-65a9bc0b8c83
+      - LANGFUSE_PUBLIC_KEY=pk-lf-f1703f17-7916-4954-8907-ec3de4a17ca9
+      - LANGFUSE_HOST=http://langfuse:3000
+    command: ["sh", "-c", "python dataprep.py && uvicorn api:app --host 0.0.0.0 --port 8000 --reload"]
+
+  frontend:
+    build:
+      context: ./frontend  # Frontend folder with Dockerfile
+      dockerfile: Dockerfile
+    container_name: frontend_container
+    depends_on:
+      - backend  # Ensure backend is running before frontend
+    ports:
+      - "8501:8501"  # Streamlit runs on port 8501
+    env_file:
+      - .env
+    volumes:
+      - ./frontend:/app  # Mount the frontend folder into the container
+    environment:
+      - BACKEND_URL=http://backend:8000  # Connect the frontend to the backend service
+
+volumes:
+  postgres_data:
+  elasticsearch_data:

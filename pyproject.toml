@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "llm-zoomcamp-2024-project"
+version = "0.1.0"
+description = ""
+authors = ["PathornKiti <pathorn.kiti@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+openai = "^1.42.0"
+elasticsearch = "^8.15.0"
+pandas = "^2.2.2"
+numpy = "1.26.4"
+requests = "^2.32.3"
+sentence-transformers = "^3.0.1"
+scikit-learn = "^1.5.1"
+psycopg2-binary = "^2.9.9"
+python-dotenv = "^1.0.1"
+datasets = "^2.21.0"
+langfuse = "^2.46.0"
+langchain = "^0.2.16"
+langchain-elasticsearch = "^0.2.2"
+langchain-google-genai = "^1.0.10"
+langchain-huggingface = "^0.0.3"
+langchain-core = "^0.2.38"
+langchain-community = "^0.2.16"
+playwright = "^1.46.0"
+html2text = "^2024.2.26"
+unstructured = "^0.15.9"
+sqlalchemy = "^2.0.34"
+langchain-postgres = "^0.0.12"
+langchain-openai = "0.1.25"
+fastapi = "^0.115.0"
+uvicorn = "^0.30.6"
+chromadb = "^0.5.11"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
